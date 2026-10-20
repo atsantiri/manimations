@@ -1,0 +1,2 @@
+# This file records the segment order used by Manim.
+file 'file:/home/artemis/manimations/actar/media/videos/main/480p15/partial_movie_files/SiliconWalls/37fff3b7676cb8ffdd48d8c2887d50c1d1f48b94aad9ebaf56b50098b357a450.mp4'
