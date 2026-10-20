@@ -1,0 +1,11 @@
+# This file records the segment order used by Manim.
+file 'file:/home/artemis/manimations/actar/media/videos/actar_decay/480p15/partial_movie_files/ACTARDecay/uncached_00000.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar_decay/480p15/partial_movie_files/ACTARDecay/uncached_00001.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar_decay/480p15/partial_movie_files/ACTARDecay/uncached_00002.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar_decay/480p15/partial_movie_files/ACTARDecay/uncached_00003.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar_decay/480p15/partial_movie_files/ACTARDecay/uncached_00004.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar_decay/480p15/partial_movie_files/ACTARDecay/uncached_00005.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar_decay/480p15/partial_movie_files/ACTARDecay/uncached_00006.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar_decay/480p15/partial_movie_files/ACTARDecay/uncached_00007.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar_decay/480p15/partial_movie_files/ACTARDecay/uncached_00008.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar_decay/480p15/partial_movie_files/ACTARDecay/uncached_00009.mp4'
