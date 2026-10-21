@@ -46,8 +46,15 @@ def make_wall(
 def make_pad_plane(center, size=BOX, n_pix=50, color=PAD_):
     plane = VGroup()
 
-    base = Square(
-        side_length=size,
+    # base = Square(
+    #     side_length=size,
+    #     fill_color=color,
+    #     fill_opacity=0.08,
+    #     stroke_color=color,
+    #     stroke_width=2,
+    # )
+    base = Prism(
+        dimensions=[size, size, THICK],
         fill_color=color,
         fill_opacity=0.08,
         stroke_color=color,
@@ -81,12 +88,18 @@ def make_pad_plane(center, size=BOX, n_pix=50, color=PAD_):
     return plane
 
 
-def make_cfa(center, radius=0.3, width=THICK, color=CFA_):
+def make_cfa(center, radius=0.2, width=THICK, color=CFA_):
     cfa = VGroup()
     cfa.add(Cylinder(radius, height=width, direction=(1, 0, 0)))
     cfa.set_fill(color, 0.3)
     cfa.move_to(center)
     return cfa
+
+
+def label(text, color, pos):
+    t = Text(text, color=color, weight=BOLD, font_size=24)
+    t.move_to(pos)
+    return t
 
 
 class ACTARDecay(ThreeDScene):
@@ -99,8 +112,8 @@ class ACTARDecay(ThreeDScene):
         # self.begin_ambient_camera_rotation(rate=-0.5)
         # self.wait(2)
         # self.stop_ambient_camera_rotation()
-        self.move_camera(theta=-120 * DEGREES, run_time=2)
-        
+        # self.move_camera(theta=-120 * DEGREES, run_time=2)
+
         self.implant()
 
     def make_geometry(self):
@@ -113,11 +126,6 @@ class ACTARDecay(ThreeDScene):
         si_l0 = make_wall((0, BOX / 2, z0), "y", 3, 4, YELLOW_, tile_h=0.7)
         si_r0 = make_wall((0, -BOX / 2, z0), "y", 3, 4, BLUE_, tile_h=0.7)
         si_f0 = make_wall((BOX / 2 + 0.2, 0, z0), "x", 4, 3, GREEN_)
-
-        def label(text, color, pos):
-            t = Text(text, color=color, weight=BOLD, font_size=24)
-            t.move_to(pos)
-            return t
 
         lab_l0 = label("Si_L0", YELLOW_, (0, BOX / 2 - 0.3, WALL_H + 0.6))
         lab_r0 = label("Si_R0", BLUE_, (BOX / 4, -BOX / 2 - 0.5, 0))  # wall_h + 0.7))
@@ -182,7 +190,7 @@ class ACTARDecay(ThreeDScene):
 
     def drift_to_pad(self, *groups, run_time=4):
         self.play(
-            *[dot.animate.set_z(PAD_Z) for g in groups for dot in g],
+            *[dot.animate.set_z(PAD_Z + THICK) for g in groups for dot in g],
             run_time=run_time,
         )
 
@@ -230,14 +238,12 @@ class ACTARDecay(ThreeDScene):
             light.animate.move_to(sp),
             run_time=1.5,
             rate_functions=linear,
-        )   
-        self.stop_ionization(heavy_e)     
-        self.stop_ionization(light_e) 
-        mark = Circle(radius=0.03, color=TEAL, fill_opacity=0.9, stroke_width=0)
-        mark.rotate(PI / 2, axis=RIGHT)                       
-        mark.move_to([sp[0], -BOX / 2 + THICK / 2 + 0.005, sp[2]])  
+        )
+        self.stop_ionization(heavy_e)
+        self.stop_ionization(light_e)
+        mark = Circle(radius=0.05, color=TEAL, fill_opacity=0.9, stroke_width=0)
+        mark.rotate(PI / 2, axis=RIGHT)
+        mark.move_to([sp[0], -BOX / 2 + THICK / 2 + 0.005, sp[2]])
         self.play(FadeIn(mark, scale=3))
         self.drift_to_pad(heavy_e, light_e)
         self.wait(2)
-        
-           
