@@ -1,16 +1,25 @@
 from manim import *
 
+# Set up 4:3 resolution
+config.pixel_width = 1440
+config.pixel_height = 1080
+config.frame_width = 4/3* config.frame_height
+
+# colors
 YELLOW_ = "#F28B05"
-GREEN_ = "#3C7D22"
+GREEN_ = "#7B9770"
 BLUE_ = "#4A90D9"
-PAD_ = "#C0C0C0"
+PAD_ = "#999696A9"
 CFA_ = "#9C2D2D"
+IMPLANT_ = "#265C24"
+HEAVY_ = "#5CD0B3"
+LIGHT_ = "#FF00FF"
 
 # Geomtry. Beam travels along +x.
-TILE = 0.5  # Se detector
-GAP = 0.06  # gap b/w Si
+TILE = 0.5    # Se detector
+GAP = 0.06    # gap b/w Si
 THICK = 0.06  # wall thickness
-BOX = 4.0
+BOX = 4.0     # gas
 WALL_H = 4 * (TILE + GAP)
 CFA_CENTRE = np.array([-WALL_H / 2 - 1.0, 0, WALL_H / 2])
 IMPLANT_ORIGIN = CFA_CENTRE - np.array([0.5, 0, 0])
@@ -34,9 +43,9 @@ def make_wall(
             p = Prism(
                 dimensions=dims,
                 fill_color=color,
-                fill_opacity=0.2,
+                fill_opacity=0.1,
                 stroke_color=color,
-                stroke_width=2,
+                stroke_width=1.5,
             )
             p.move_to(np.array(center) + off)
             wall.add(p)
@@ -56,9 +65,9 @@ def make_pad_plane(center, size=BOX, n_pix=50, color=PAD_):
     base = Prism(
         dimensions=[size, size, THICK],
         fill_color=color,
-        fill_opacity=0.08,
+        fill_opacity=0.03,
         stroke_color=color,
-        stroke_width=2,
+        stroke_width=1.5,
     )
     plane.add(base)
 
@@ -91,13 +100,15 @@ def make_pad_plane(center, size=BOX, n_pix=50, color=PAD_):
 def make_cfa(center, radius=0.2, width=THICK, color=CFA_):
     cfa = VGroup()
     cfa.add(Cylinder(radius, height=width, direction=(1, 0, 0)))
+    cfa.stroke_color = color
+    cfa.stroke_opacity = 0.1
     cfa.set_fill(color, 0.3)
     cfa.move_to(center)
     return cfa
 
 
 def label(text, color, pos):
-    t = Text(text, color=color, weight=BOLD, font_size=24)
+    t = Text(text, color=color, weight=BOLD, font_size=22)
     t.move_to(pos)
     return t
 
@@ -105,40 +116,37 @@ def label(text, color, pos):
 class ACTARDecay(ThreeDScene):
     def construct(self):
 
-        # self.set_camera_orientation(phi=70 * DEGREES, theta=-100 * DEGREES, zoom=1.2)
-        self.set_camera_orientation(phi=70 * DEGREES, theta=-150 * DEGREES, zoom=1.0)
+        self.camera.background_color = WHITE
+        self.set_camera_orientation(phi=70 * DEGREES, theta=-150 * DEGREES, zoom=1.5, frame_center=[0, 0, WALL_H / 2])
         self.make_geometry()
 
-        # self.begin_ambient_camera_rotation(rate=-0.5)
-        # self.wait(2)
-        # self.stop_ambient_camera_rotation()
-        # self.move_camera(theta=-120 * DEGREES, run_time=2)
+        self.move_camera(theta=-120 * DEGREES, run_time=2)
 
-        self.implant()
+        self.create_event()
 
     def make_geometry(self):
-
-        # dimensions
-        z0 = WALL_H / 2
-        cfa_centre = (-WALL_H / 2 - 1.0, 0, WALL_H / 2)
-
+        
         # Si walls and labels
+        z0 = WALL_H / 2
+        
         si_l0 = make_wall((0, BOX / 2, z0), "y", 3, 4, YELLOW_, tile_h=0.7)
         si_r0 = make_wall((0, -BOX / 2, z0), "y", 3, 4, BLUE_, tile_h=0.7)
         si_f0 = make_wall((BOX / 2 + 0.2, 0, z0), "x", 4, 3, GREEN_)
 
-        lab_l0 = label("Si_L0", YELLOW_, (0, BOX / 2 - 0.3, WALL_H + 0.6))
-        lab_r0 = label("Si_R0", BLUE_, (BOX / 4, -BOX / 2 - 0.5, 0))  # wall_h + 0.7))
-        lab_f0 = label("Si_F0", GREEN_, (BOX / 2 + 0.2, -BOX / 4, WALL_H + 0.5))
+        lab_l0 = label("Si_L0", YELLOW_, (-BOX/2 + 0.3, BOX / 2 - 0.3, PAD_Z + 0.3))
+        lab_r0 = label("Si_R0", BLUE_, (BOX / 4, -BOX / 2 - 0.5, 0))  
+        lab_f0 = label("Si_F0", GREEN_, (BOX / 2 + 0.2, -BOX / 4, WALL_H + 0.4))
 
         # pad plane
         pad = make_pad_plane((0, 0, PAD_Z), size=3.7)
+        lab_pad = label("pad plane", PAD_, (BOX/2, BOX / 2 + 0.1, PAD_Z + 0.2))
 
         # cfa
-        cfa = make_cfa(cfa_centre)
+        cfa = make_cfa(CFA_CENTRE)
+        lab_cfa = label("CFA", CFA_, CFA_CENTRE + (-0.15, 0.15, -0.4))
 
         # Create physical objects
-        self.add_fixed_orientation_mobjects(lab_l0, lab_r0, lab_f0)
+        self.add_fixed_orientation_mobjects(lab_l0, lab_r0, lab_f0, lab_cfa, lab_pad)
         self.add(si_l0, si_r0, si_f0, pad, cfa)
 
     def start_ionization(
@@ -146,9 +154,9 @@ class ACTARDecay(ThreeDScene):
         particle,
         color,
         start=None,
-        spacing=0.05,
-        spread=0.01,
-        per_step=3,
+        spacing=0.04,
+        spread=0.02,
+        per_step=4,
         radius=0.004,
         seed=1,
     ):
@@ -194,17 +202,17 @@ class ACTARDecay(ThreeDScene):
             run_time=run_time,
         )
 
-    def implant(self):
+    def create_event(self):
 
         # Create implant
         implant = Dot3D(
-            point=IMPLANT_ORIGIN, radius=0.05, color=YELLOW, resolution=(6, 6)
+            point=IMPLANT_ORIGIN, radius=0.05, color=IMPLANT_, resolution=(6, 6)
         )
         self.play(FadeIn(implant))
 
         # Move implant to stopping point and ionise gas
         stopping_point = np.array([3 * BOX / 4, 0, 0])
-        electrons = self.start_ionization(implant, YELLOW, start=CFA_CENTRE)
+        electrons = self.start_ionization(implant, color=IMPLANT_, start=CFA_CENTRE)
         self.play(implant.animate.shift(stopping_point), run_time=3, rate_func=linear)
         self.stop_ionization(electrons)
         self.drift_to_pad(electrons)
@@ -213,9 +221,11 @@ class ACTARDecay(ThreeDScene):
         # Decay
         stopping_point = implant.get_center()
         heavy = Dot3D(
-            point=stopping_point, radius=0.05, color=PURE_MAGENTA, resolution=(6, 6)
+            point=stopping_point, radius=0.05, color=HEAVY_, resolution=(6, 6)
         )
-        light = Dot3D(point=stopping_point, radius=0.01, color=TEAL, resolution=(6, 6))
+        light = Dot3D(
+            point=stopping_point, radius=0.01, color=LIGHT_, resolution=(6, 6)
+        )
 
         self.play(
             TransformFromCopy(implant, heavy),
@@ -226,13 +236,13 @@ class ACTARDecay(ThreeDScene):
 
         # Silicon Point for light and random L1 for heavy
         sp = np.array([1.0, -BOX / 2, 1.8])
-        heavy_dir = np.array([0.5, 1.0, -0.3])
+        heavy_dir = np.array([1.0, 1.0, -0.3])
         heavy_dir = heavy_dir / np.linalg.norm(heavy_dir)
         heavy_stop = stopping_point + 1.0 * heavy_dir
 
         # Move decay products
-        heavy_e = self.start_ionization(heavy, PURE_MAGENTA, seed=2)
-        light_e = self.start_ionization(light, TEAL, seed=3)
+        heavy_e = self.start_ionization(heavy, HEAVY_, seed=2)
+        light_e = self.start_ionization(light, LIGHT_, seed=3, spread=0.01)
         self.play(
             heavy.animate.move_to(heavy_stop),
             light.animate.move_to(sp),
@@ -241,9 +251,9 @@ class ACTARDecay(ThreeDScene):
         )
         self.stop_ionization(heavy_e)
         self.stop_ionization(light_e)
-        mark = Circle(radius=0.05, color=TEAL, fill_opacity=0.9, stroke_width=0)
+        mark = Circle(radius=0.05, color=LIGHT_, fill_opacity=0.9, stroke_width=0)
         mark.rotate(PI / 2, axis=RIGHT)
         mark.move_to([sp[0], -BOX / 2 + THICK / 2 + 0.005, sp[2]])
-        self.play(FadeIn(mark, scale=3))
+        self.play(FadeIn(mark, scale=2))
         self.drift_to_pad(heavy_e, light_e)
         self.wait(2)
