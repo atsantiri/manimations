@@ -3,7 +3,7 @@ from manim import *
 # Set up 4:3 resolution
 config.pixel_width = 1440
 config.pixel_height = 1080
-config.frame_width = 4/3* config.frame_height
+config.frame_width = 4 / 3 * config.frame_height
 
 # colors
 YELLOW_ = "#F28B05"
@@ -16,14 +16,15 @@ HEAVY_ = "#5CD0B3"
 LIGHT_ = "#FF00FF"
 
 # Geomtry. Beam travels along +x.
-TILE = 0.5    # Se detector
-GAP = 0.06    # gap b/w Si
+TILE = 0.5  # Se detector
+GAP = 0.06  # gap b/w Si
 THICK = 0.06  # wall thickness
-BOX = 4.0     # gas
+BOX = 4.0  # gas
 WALL_H = 4 * (TILE + GAP)
 CFA_CENTRE = np.array([-WALL_H / 2 - 1.0, 0, WALL_H / 2])
 IMPLANT_ORIGIN = CFA_CENTRE - np.array([0.5, 0, 0])
 PAD_Z = WALL_H + 0.2
+PAD_SIDE = 3.0
 
 
 def make_wall(
@@ -52,16 +53,9 @@ def make_wall(
     return wall
 
 
-def make_pad_plane(center, size=BOX, n_pix=50, color=PAD_):
+def make_pad_plane(center, size=PAD_SIDE, n_pix=50, color=PAD_):
     plane = VGroup()
 
-    # base = Square(
-    #     side_length=size,
-    #     fill_color=color,
-    #     fill_opacity=0.08,
-    #     stroke_color=color,
-    #     stroke_width=2,
-    # )
     base = Prism(
         dimensions=[size, size, THICK],
         fill_color=color,
@@ -117,29 +111,36 @@ class ACTARDecay(ThreeDScene):
     def construct(self):
 
         self.camera.background_color = WHITE
-        self.set_camera_orientation(phi=70 * DEGREES, theta=-150 * DEGREES, zoom=1.5, frame_center=[0, 0, WALL_H / 2])
+        self.set_camera_orientation(
+            phi=70 * DEGREES,
+            theta=-150 * DEGREES,
+            zoom=1.5,
+            frame_center=[0, 0, WALL_H / 2],
+        )
         self.make_geometry()
 
         self.move_camera(theta=-120 * DEGREES, run_time=2)
 
         self.create_event()
+        self.wait(1)
 
     def make_geometry(self):
-        
+
         # Si walls and labels
         z0 = WALL_H / 2
-        
+
         si_l0 = make_wall((0, BOX / 2, z0), "y", 3, 4, YELLOW_, tile_h=0.7)
         si_r0 = make_wall((0, -BOX / 2, z0), "y", 3, 4, BLUE_, tile_h=0.7)
         si_f0 = make_wall((BOX / 2 + 0.2, 0, z0), "x", 4, 3, GREEN_)
 
-        lab_l0 = label("Si_L0", YELLOW_, (-BOX/2 + 0.3, BOX / 2 - 0.3, PAD_Z + 0.3))
-        lab_r0 = label("Si_R0", BLUE_, (BOX / 4, -BOX / 2 - 0.5, 0))  
+        lab_l0 = label("Si_L0", YELLOW_, (-BOX / 2 + 0.3, BOX / 2 - 0.3, PAD_Z + 0.3))
+        lab_r0 = label("Si_R0", BLUE_, (BOX / 4, -BOX / 2 - 0.5, 0))
         lab_f0 = label("Si_F0", GREEN_, (BOX / 2 + 0.2, -BOX / 4, WALL_H + 0.4))
 
         # pad plane
-        pad = make_pad_plane((0, 0, PAD_Z), size=3.7)
-        lab_pad = label("pad plane", PAD_, (BOX/2, BOX / 2 + 0.1, PAD_Z + 0.2))
+        self.pad_center = (0, 0, PAD_Z)
+        pad = make_pad_plane(self.pad_center)
+        lab_pad = label("pad plane", PAD_, (BOX / 2, BOX / 2 + 0.1, PAD_Z + 0.2))
 
         # cfa
         cfa = make_cfa(CFA_CENTRE)
@@ -196,11 +197,25 @@ class ACTARDecay(ThreeDScene):
     def stop_ionization(self, electrons):
         electrons.clear_updaters()
 
+    def on_pad(self, dot): # check if electron lands on pad plane to be recorded or not
+        x, y, _ = dot.get_center()
+        cx, cy, _ = self.pad_center
+        half = PAD_SIDE / 2
+        return abs(x - cx) <= half and abs(y - cy) <= half
+
     def drift_to_pad(self, *groups, run_time=4):
-        self.play(
-            *[dot.animate.set_z(PAD_Z + THICK) for g in groups for dot in g],
-            run_time=run_time,
-        )
+        anims = []
+        to_remove = []
+        for g in groups:
+            for dot in g:
+                if self.on_pad(dot):
+                    anims.append(dot.animate.set_z(PAD_Z + THICK))
+                else:
+                    anims.append(dot.animate.set_z(PAD_Z + THICK).set_opacity(0))
+                    to_remove.append(dot)
+
+        self.play(*anims, run_time=run_time)
+        self.remove(*to_remove)  # optional cleanup, the dots are invisible by now
 
     def create_event(self):
 
