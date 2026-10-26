@@ -1,5 +1,8 @@
 from manim import *
 
+# Disable chache since electron cloud has too many objects
+config.disable_caching = True
+
 # Set up 4:3 resolution
 config.pixel_width = 1440
 config.pixel_height = 1080
@@ -11,7 +14,7 @@ GREEN_ = "#7B9770"
 BLUE_ = "#4A90D9"
 PAD_ = "#999696A9"
 CFA_ = "#9C2D2D"
-IMPLANT_ = "#265C24"
+BEAM_ = "#265C24"
 HEAVY_ = "#5CD0B3"
 LIGHT_ = "#FF00FF"
 
@@ -22,11 +25,12 @@ THICK = 0.06  # wall thickness
 BOX = 4.0  # gas
 WALL_H = 4 * (TILE + GAP)
 CFA_CENTRE = np.array([-WALL_H / 2 - 1.0, 0, WALL_H / 2])
-IMPLANT_ORIGIN = CFA_CENTRE - np.array([0.5, 0, 0])
+BEAM_ORIGIN = CFA_CENTRE - np.array([0.5, 0, 0])
 PAD_Z = WALL_H + 0.2
 PAD_SIDE = 3.0
 
 
+# Helper functions
 def make_wall(
     center, normal_axis, n_cols, n_rows, color, tile_h=TILE, tile_v=TILE, gap=GAP
 ):
@@ -107,9 +111,14 @@ def label(text, color, pos):
     return t
 
 
-class ACTARDecay(ThreeDScene):
+# Main function shared between Decay and Reactions
+class ACTAR(ThreeDScene):
     def construct(self):
+        self.make_geometry()
+        self.setup_scene()
+        self.wait(2)
 
+    def setup_scene(self):
         self.camera.background_color = WHITE
         self.set_camera_orientation(
             phi=70 * DEGREES,
@@ -117,12 +126,7 @@ class ACTARDecay(ThreeDScene):
             zoom=1.5,
             frame_center=[0, 0, WALL_H / 2],
         )
-        self.make_geometry()
-
         self.move_camera(theta=-120 * DEGREES, run_time=2)
-
-        self.create_event()
-        self.wait(1)
 
     def make_geometry(self):
 
@@ -133,14 +137,14 @@ class ACTARDecay(ThreeDScene):
         si_r0 = make_wall((0, -BOX / 2, z0), "y", 3, 4, BLUE_, tile_h=0.7)
         si_f0 = make_wall((BOX / 2 + 0.2, 0, z0), "x", 4, 3, GREEN_)
 
-        lab_l0 = label("Si_L0", YELLOW_, (-BOX / 2 + 0.3, BOX / 2 - 0.3, PAD_Z + 0.3))
+        lab_l0 = label("Si_L0", YELLOW_, (-BOX / 2 + 0.3, BOX / 2 - 0.3, PAD_Z + 0.2))
         lab_r0 = label("Si_R0", BLUE_, (BOX / 4, -BOX / 2 - 0.5, 0))
-        lab_f0 = label("Si_F0", GREEN_, (BOX / 2 + 0.2, -BOX / 4, WALL_H + 0.4))
+        lab_f0 = label("Si_F0", GREEN_, (BOX / 2 + 0.2, -BOX / 4, WALL_H + 0.2))
 
         # pad plane
         self.pad_center = (0, 0, PAD_Z)
         pad = make_pad_plane(self.pad_center)
-        lab_pad = label("pad plane", PAD_, (BOX / 2, BOX / 2 + 0.1, PAD_Z + 0.2))
+        lab_pad = label("pad plane", PAD_, (BOX / 2, BOX / 2 + 0.1, PAD_Z))
 
         # cfa
         cfa = make_cfa(CFA_CENTRE)
@@ -197,7 +201,7 @@ class ACTARDecay(ThreeDScene):
     def stop_ionization(self, electrons):
         electrons.clear_updaters()
 
-    def on_pad(self, dot): # check if electron lands on pad plane to be recorded or not
+    def on_pad(self, dot):  # check if electron lands on pad plane to be recorded or not
         x, y, _ = dot.get_center()
         cx, cy, _ = self.pad_center
         half = PAD_SIDE / 2
@@ -217,17 +221,27 @@ class ACTARDecay(ThreeDScene):
         self.play(*anims, run_time=run_time)
         self.remove(*to_remove)  # optional cleanup, the dots are invisible by now
 
-    def create_event(self):
+
+class ACTARDecay(ACTAR):
+    def construct(self):
+
+        self.make_geometry()
+        self.setup_scene()
+
+        self.create_decay_event()
+        self.wait(1)
+
+    def create_decay_event(self):
 
         # Create implant
         implant = Dot3D(
-            point=IMPLANT_ORIGIN, radius=0.05, color=IMPLANT_, resolution=(6, 6)
+            point=BEAM_ORIGIN, radius=0.05, color=BEAM_, resolution=(6, 6)
         )
         self.play(FadeIn(implant))
 
         # Move implant to stopping point and ionise gas
         stopping_point = np.array([3 * BOX / 4, 0, 0])
-        electrons = self.start_ionization(implant, color=IMPLANT_, start=CFA_CENTRE)
+        electrons = self.start_ionization(implant, color=BEAM_, start=CFA_CENTRE)
         self.play(implant.animate.shift(stopping_point), run_time=3, rate_func=linear)
         self.stop_ionization(electrons)
         self.drift_to_pad(electrons)
@@ -271,4 +285,67 @@ class ACTARDecay(ThreeDScene):
         mark.move_to([sp[0], -BOX / 2 + THICK / 2 + 0.005, sp[2]])
         self.play(FadeIn(mark, scale=2))
         self.drift_to_pad(heavy_e, light_e)
+        self.wait(2)
+
+
+class ACTARReaction(ACTAR):
+    def construct(self):
+        self.make_geometry()
+        self.setup_scene()
+        self.create_reaction_event()
+
+    def create_reaction_event(self):
+
+        # Create beam
+        beam = Dot3D(
+            point=BEAM_ORIGIN, radius=0.05, color=BEAM_, resolution=(6, 6)
+        )
+        self.play(FadeIn(beam))
+
+        # Move beam to RP and ionise gas
+        rp = np.array([3 * BOX / 4, 0, 0])
+        electrons = self.start_ionization(beam, color=BEAM_, start=CFA_CENTRE)
+        self.play(beam.animate.shift(rp), run_time=3, rate_func=linear)
+        self.stop_ionization(electrons)
+        
+        # Reaction
+        rp = beam.get_center()
+        heavy = Dot3D(
+            point=rp, radius=0.05, color=HEAVY_, resolution=(6, 6)
+        )
+        light = Dot3D(
+            point=rp, radius=0.01, color=LIGHT_, resolution=(6, 6)
+        )        
+        self.play(
+            TransformFromCopy(beam, heavy),
+            TransformFromCopy(beam, light),
+            FadeOut(beam),
+            run_time=0.05,  # run_time too fast for 15FPS (-ql), will only be seen with -pqh
+        )
+        
+        # Silicon Point for light and random L1 for heavy
+        sp = np.array([1.0, -BOX / 2, 1.8])
+        heavy_dir = np.array([1.0, 1.0, -0.3])
+        heavy_dir = heavy_dir / np.linalg.norm(heavy_dir)
+        heavy_stop = rp + 1.0 * heavy_dir        
+                
+        # Move reaction products
+        heavy_e = self.start_ionization(heavy, HEAVY_, seed=2)
+        light_e = self.start_ionization(light, LIGHT_, seed=3, spread=0.01)        
+        self.play(
+            heavy.animate.move_to(heavy_stop),
+            light.animate.move_to(sp),
+            run_time=1.5,
+            rate_functions=linear,
+        )       
+        self.stop_ionization(heavy_e)
+        self.stop_ionization(light_e)        
+        mark = Circle(radius=0.05, color=LIGHT_, fill_opacity=0.9, stroke_width=0)
+        mark.rotate(PI / 2, axis=RIGHT)
+        mark.move_to([sp[0], -BOX / 2 + THICK / 2 + 0.005, sp[2]])
+        self.play(FadeIn(mark, scale=2))
+        
+        # Drift electrons
+        self.drift_to_pad(electrons, heavy_e, light_e)         
+        
         self.wait(2)

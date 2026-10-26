@@ -1,0 +1,4 @@
+# This file records the segment order used by Manim.
+file 'file:/home/artemis/manimations/actar/media/videos/actar/1080p15/partial_movie_files/ACTARDecay/uncached_00000.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar/1080p15/partial_movie_files/ACTARDecay/uncached_00001.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar/1080p15/partial_movie_files/ACTARDecay/uncached_00002.mp4'

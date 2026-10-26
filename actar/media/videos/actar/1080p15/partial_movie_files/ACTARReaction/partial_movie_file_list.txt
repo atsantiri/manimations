@@ -1,0 +1,9 @@
+# This file records the segment order used by Manim.
+file 'file:/home/artemis/manimations/actar/media/videos/actar/1080p15/partial_movie_files/ACTARReaction/uncached_00000.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar/1080p15/partial_movie_files/ACTARReaction/uncached_00001.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar/1080p15/partial_movie_files/ACTARReaction/uncached_00002.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar/1080p15/partial_movie_files/ACTARReaction/uncached_00003.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar/1080p15/partial_movie_files/ACTARReaction/uncached_00004.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar/1080p15/partial_movie_files/ACTARReaction/uncached_00005.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar/1080p15/partial_movie_files/ACTARReaction/uncached_00006.mp4'
+file 'file:/home/artemis/manimations/actar/media/videos/actar/1080p15/partial_movie_files/ACTARReaction/uncached_00007.mp4'
