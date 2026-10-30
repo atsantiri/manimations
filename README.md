@@ -6,4 +6,7 @@ atsantiri - ACTAR animation with Manim (https://docs.manim.community)
     - If you have executed the script before and the manimations/.venv directory exists, then : source .venv/bin/activate
 - Execute script:
     - cd actar
-    - manim -pql actar_decay.py ACTARDecay
+    - manim -pql actar.py ACTARDecay
+    or
+    manim -pql actar.py ACTARReaction
+    where -p denotes that the cideo will play when he code finishes and -ql/-qh is the quality setting of the output video (low/high). 
